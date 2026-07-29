@@ -21,7 +21,7 @@ pub struct ApproxCounter;
 impl TokenCounter for ApproxCounter {
     #[inline]
     fn count(&self, text: &[u8]) -> u64 {
-        Self::approx_from_bytes(text.len() as u64)
+        approx_from_bytes(text.len() as u64)
     }
 }
 

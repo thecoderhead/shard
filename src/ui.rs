@@ -22,23 +22,23 @@ fn tag() -> String {
 
 /// ASCII HUD logo with version tag and scanline.
 pub fn logo() -> String {
-    let c = Color::Cyan;
-    let m = Color::Magenta;
-    let ascii = format!(
+    let c = "\x1b[1;36m";   // bold cyan
+    let m = "\x1b[1;35m";   // bold magenta
+    let reset = "\x1b[0m";
+    format!(
         " {c}  ███████  ██  ██   ██████   ██████  ██████\n\
          {c} ██       ██  ██  ██  ██  ██  ██  ██\n\
          {m} ███████  ██  ██  ██████  ██████  ██  ██\n\
          {m}  ███████  ██  ██  ██  ██  ██  ██  ██████{reset}   {ver}\n\
          {scan}\n\
          {nfo}",
-        c = c.bold(),
-        m = m.bold(),
-        reset = Color::Reset,
+        c = c,
+        m = m,
+        reset = reset,
         ver = glitch_label(&format!("v{}", env!("CARGO_PKG_VERSION")), false),
         scan = scanline(),
         nfo = topo_tag(),
-    );
-    ascii
+    )
 }
 
 fn topo_tag() -> String {

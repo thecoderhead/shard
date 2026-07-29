@@ -43,7 +43,7 @@ pub fn run(opts: LogOptions) -> Result<()> {
         for (uuid, path) in &candidates {
             let meta = path.metadata().ok();
             let size = meta.map(|m| m.len()).unwrap_or(0);
-            println!("  {} {} ({})", "▸".dim(), uuid.cyan(), human_size(size));
+            println!("  {} {} ({})", "▸".dim(), uuid.clone().cyan(), human_size(size));
         }
         return Ok(());
     }

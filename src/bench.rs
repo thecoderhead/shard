@@ -112,6 +112,7 @@ pub fn run() -> Result<()> {
             )
             .red()
             .bold()
+            .to_string()
         };
 
         let bar = ui::progress_bar(savings / 100.0, 12);

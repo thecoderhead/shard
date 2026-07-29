@@ -9,7 +9,7 @@
 
 pub mod db;
 
-pub use db::{MetricsDb, RunRecord, RunSummary};
+pub use db::{MetricsDb, RunRecord};
 
 /// Open the metrics database at `path`, returning `None` on failure so the
 /// command can proceed without metrics.

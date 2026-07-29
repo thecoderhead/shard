@@ -82,18 +82,19 @@ impl StreamingCompactor {
     /// Flush the current line buffer through compaction. Classifies on the
     /// first flush, reuses archetype thereafter.
     fn flush_window(&mut self) -> String {
-        let lines: Vec<&str> = self.line_buffer.iter().map(|s| s.as_str()).collect();
-        self.line_buffer.clear();
+        let lines: Vec<String> = std::mem::take(&mut self.line_buffer);
 
         if lines.is_empty() {
             return String::new();
         }
 
+        let line_refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
+
         // Join lines with newlines for the batch compactor.
         let input = lines.join("\n");
 
-        if !self.classified && lines.len() >= 20 {
-            self.archetype = Some(classify::classify(&lines));
+        if !self.classified && line_refs.len() >= 20 {
+            self.archetype = Some(classify::classify(&line_refs));
             self.classified = true;
         }
 

@@ -36,19 +36,19 @@ pub fn structural_fingerprint(line: &str) -> String {
     let result = RX_FINGERPRINT
         .replace_all(line, |caps: &regex::Captures| {
             if caps.name("iso8601").is_some() {
-                "<ISO8601>"
+                "<ISO8601>".to_owned()
             } else if caps.name("uuid").is_some() {
-                "<UUID>"
+                "<UUID>".to_owned()
             } else if caps.name("ip").is_some() {
-                "<IP>"
+                "<IP>".to_owned()
             } else if caps.name("hex").is_some() {
-                "<HEX>"
+                "<HEX>".to_owned()
             } else if caps.name("path_win").is_some() || caps.name("path_unix").is_some() {
-                "<PATH>"
+                "<PATH>".to_owned()
             } else if caps.name("num").is_some() {
-                "<NUM>"
+                "<NUM>".to_owned()
             } else {
-                caps.get(0).map_or("", |m| m.as_str())
+                caps.get(0).map_or(String::new(), |m| m.as_str().to_owned())
             }
         });
     // Only allocate when substitutions were actually made.

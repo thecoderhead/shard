@@ -1,7 +1,6 @@
 use std::fs;
-use std::path::Path;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use crate::ui;
 use crate::vfs;

@@ -1,6 +1,5 @@
 //! `ShardPTYBridge` implementation. See parent module docs for architecture.
 
-use std::cell::RefCell;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -126,10 +125,10 @@ impl ShardPTYBridge {
         // Spawn a writer task that consumes compacted windows from the
         // streaming compactor and writes them to stdout as they arrive.
         let compact_writer = if compaction_mode {
-            Some(tokio::spawn(async move {
+            Some(tokio::task::spawn_blocking(|| {
                 let stdout = std::io::stdout();
                 let mut buf = stdout.lock();
-                while let Some(chunk) = compact_rx.recv().await {
+                while let Ok(chunk) = compact_rx.blocking_recv() {
                     use std::io::Write as _;
                     let _ = buf.write_all(chunk.as_bytes());
                     let _ = buf.flush();
@@ -574,28 +573,29 @@ async fn drain_vte(
     cancel: Arc<tokio::sync::Notify>,
     compact_tx: Option<tokio::sync::mpsc::UnboundedSender<String>>,
 ) -> VteResult {
-    let counts = RefCell::new(TokenCounts::default());
-    let text = RefCell::new(String::with_capacity(4096));
+    let counts = Arc::new(std::sync::Mutex::new(TokenCounts::default()));
+    let text = Arc::new(std::sync::Mutex::new(String::with_capacity(4096)));
     let mut stream = compact_tx.is_some().then(|| StreamingCompactor::new(100));
     let mut streamed_archetype: Option<Archetype> = None;
-    let mut text_delta = String::new();  // new text since last stream flush
 
-    let mut tok = Tokenizer::new(|t| {
+    let counts_c = counts.clone();
+    let text_c = text.clone();
+    let mut tok = Tokenizer::new(move |t| {
         match t {
             Token::Text(b) => {
-                let mut c = counts.borrow_mut();
+                let mut c = counts_c.lock().unwrap();
                 c.text_bytes += b.len() as u64;
                 c.text_events += 1;
                 let s = unsafe { String::from_utf8_unchecked(b) };
-                text.borrow_mut().push_str(&s);
+                text_c.lock().unwrap().push_str(&s);
             }
             Token::Sgr { bytes } => {
-                let mut c = counts.borrow_mut();
+                let mut c = counts_c.lock().unwrap();
                 c.sgr_bytes += bytes.len() as u64;
                 c.sgr_events += 1;
             }
             Token::Control { bytes } => {
-                let mut c = counts.borrow_mut();
+                let mut c = counts_c.lock().unwrap();
                 c.control_bytes += bytes.len() as u64;
                 c.control_events += 1;
             }
@@ -618,15 +618,14 @@ async fn drain_vte(
         };
         match chunk {
             Some(bytes) => {
-                let len_before = text.borrow().len();
+                let text_len_before = text.lock().unwrap().len();
                 tok.feed(&bytes);
-                let len_after = text.borrow().len();
-                // Only feed the new plain-text delta to the streaming compactor.
-                if len_after > len_before {
-                    text_delta.push_str(&text.borrow()[len_before..]);
+                let text_len_after = text.lock().unwrap().len();
+                if text_len_after > text_len_before {
+                    let delta = text.lock().unwrap()[text_len_before..].to_owned();
                     if let Some(ref mut s) = stream {
                         if let Some(ref tx) = sender {
-                            for w in s.feed_text(&text_delta) {
+                            for w in s.feed_text(&delta) {
                                 let _ = tx.send(w);
                             }
                             if let Some(a) = s.archetype() {
@@ -634,7 +633,6 @@ async fn drain_vte(
                             }
                         }
                     }
-                    text_delta.clear();
                 }
             }
             None => break,
@@ -642,7 +640,8 @@ async fn drain_vte(
     }
     tok.finish();
 
-    let final_text = text.into_inner();
+    let final_text = text.lock().unwrap().clone();
+    let final_counts = counts.lock().unwrap().clone();
 
     // Flush remaining compacted windows.
     if let Some(ref mut s) = stream {
@@ -659,7 +658,6 @@ async fn drain_vte(
         }
     }
 
-    let final_counts = counts.into_inner();
     tracing::debug!(target: "shard::vte", ?final_counts, archetype = ?streamed_archetype, "vte tokenizer finished");
     VteResult { plain_text: final_text, streamed_archetype, counts: final_counts }
 }
