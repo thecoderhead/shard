@@ -16,29 +16,45 @@ AI --git status--> shell --> git                AI --git status--> shard --> git
 
 ## Install
 
-### npm (recommended)
+### Download from GitHub Releases
 
 ```bash
-npm install -g shard-cli
+# Download the latest binary for your platform from:
+# https://github.com/thecoderhead/shard/releases/latest
+#
+# Unzip/untar and put the `shard` binary somewhere on your PATH, e.g.:
+#   sudo mv shard /usr/local/bin/  (macOS/Linux)
+#   move shard.exe %USERPROFILE%\.cargo\bin\  (Windows)
 ```
 
-The npm package auto-detects your platform and downloads the correct pre-built binary, or falls back to `cargo build --release` if needed.
+### Via npm (from GitHub)
+
+```bash
+npx github:thecoderhead/shard --version
+```
 
 ### Build from source
 
 ```bash
-# Install Rust (once)
-winget install --id Rustlang.Rustup -e   # Windows
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh    # macOS / Linux
+cargo install --git https://github.com/thecoderhead/shard
+```
 
-# Build release binary
+Or clone and build:
+
+```bash
+git clone https://github.com/thecoderhead/shard
+cd shard
 cargo install --path .
+```
 
-# Verify
+### Verify
+
+```bash
 shard --version
 shard doctor
 shard echo hello
 shard gain
+```
 ```
 
 ## Quick start
