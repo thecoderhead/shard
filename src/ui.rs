@@ -24,20 +24,21 @@ fn tag() -> String {
 pub fn logo() -> String {
     let c = Color::Cyan;
     let m = Color::Magenta;
-    format!(
-        r#" {c}  ███████  ██  ██   ██████   ██████  ██████
- {c} ██       ██  ██  ██  ██  ██  ██  ██  ██
- {m} ███████  ██  ██  ██████  ██████  ██  ██
- {m}  ███████  ██  ██  ██  ██  ██  ██  ██████{reset}   {ver}
-{scan}
-{nfo}",
+    let ascii = format!(
+        " {c}  ███████  ██  ██   ██████   ██████  ██████\n\
+         {c} ██       ██  ██  ██  ██  ██  ██  ██\n\
+         {m} ███████  ██  ██  ██████  ██████  ██  ██\n\
+         {m}  ███████  ██  ██  ██  ██  ██  ██  ██████{reset}   {ver}\n\
+         {scan}\n\
+         {nfo}",
         c = c.to_string().bold(),
         m = m.bold(),
         reset = Color::Reset.to_string(),
         ver = glitch_label(&format!("v{}", env!("CARGO_PKG_VERSION")), false),
         scan = scanline(),
         nfo = topo_tag(),
-    )
+    );
+    ascii
 }
 
 fn topo_tag() -> String {
