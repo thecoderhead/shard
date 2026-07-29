@@ -43,15 +43,21 @@ if (entry) {
 
   console.log("shard: downloading pre-built binary...");
   try {
-    if (process.platform === "win32") {
-      execSync(`powershell -command "[Net.ServicePointManager]::SecurityProtocol = 'tls12, tls11, tls'; (New-Object Net.WebClient).DownloadFile('${url}', '${tmp}')"`, { stdio: "pipe", timeout: 120000 });
-    } else {
-      execSync(`curl -sfL "${url}" -o "${tmp}" 2>/dev/null || wget -q "${url}" -O "${tmp}"`, { stdio: "pipe", timeout: 120000 });
+    // Try curl (available on Windows 10+), fall back to PowerShell
+    try {
+      execSync(`curl.exe -sfL "${url}" -o "${tmp}"`, { stdio: "pipe", timeout: 120000 });
+    } catch {
+      execSync(`powershell -command "[Net.ServicePointManager]::SecurityProtocol = 'tls12, tls11, tls'; \$wc = New-Object Net.WebClient; \$wc.Headers.Add('User-Agent', 'shard-installer/1.0'); \$wc.DownloadFile('${url}', '${tmp}')"`, { stdio: "pipe", timeout: 120000 });
     }
+
     if (ext === ".zip") {
+      // Try PowerShell Expand-Archive first, then 7z
       const r = spawnSync("powershell", ["-command", `Expand-Archive -Path '${tmp}' -DestinationPath '${BIN_DIR}' -Force`]);
-      if (r.status !== 0) execSync(`7z x "${tmp}" -o"${BIN_DIR}" -y`, { stdio: "pipe" });
+      if (r.status !== 0) {
+        spawnSync("7z", ["x", tmp, "-y", "-o" + BIN_DIR], { stdio: "pipe" });
+      }
     } else {
+      // tar.gz — extract to BIN_DIR, binary name inside is just "shard"
       execSync(`tar xzf "${tmp}" -C "${BIN_DIR}"`, { stdio: "pipe" });
     }
     if (process.platform !== "win32") chmodSync(TARGET_BIN, 0o755);
