@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ''
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            suffix: ''
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            suffix: ''
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            suffix: ''
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: '.exe'
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            suffix: '.exe'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package binary
+        shell: bash
+        run: |
+          BIN="target/${{ matrix.target }}/release/shard${{ matrix.suffix }}"
+          ARCHIVE="shard-${{ matrix.target }}${{ matrix.suffix }}"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a "${ARCHIVE}.zip" "$BIN"
+          else
+            tar czf "shard-${{ matrix.target }}.tar.gz" -C "$(dirname "$BIN")" "$(basename "$BIN")"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.target }}
+          path: shard-*
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: shard-*
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: sha256sum shard-* > shard-checksums.txt
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: shard-*
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

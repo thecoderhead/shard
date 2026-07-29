@@ -1,0 +1,183 @@
+{
+  "name": "shard-metrics",
+  "displayName": "Shard — Token Savings Dashboard",
+  "description": "Real-time dashboard of Shard's LLM token savings. Reads .shard/metrics.db, watches for updates, and renders a live GUI. Copilot runs shells out-of-process; Shard captures its work indirectly via the shell hooks (shard init -g).",
+  "version": "0.1.0",
+  "publisher": "thecoderhead",
+  "license": "Apache-2.0",
+  "repository": {
+    "url": "https://github.com/thecoderhead/shard"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/vscode": "^1.85.0",
+    "electron": "^43.1.0",
+    "sql.js": "^1.14.1",
+    "typescript": "5.6"
+  },
+  "categories": [
+    "Other",
+    "Data Science",
+    "Visualization"
+  ],
+  "keywords": [
+    "copilot",
+    "llm",
+    "tokens",
+    "cli",
+    "productivity"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "shard-sidebar",
+          "title": "Shard Token Savings",
+          "icon": "media/dissolving.png"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "shard.showDashboard",
+        "title": "Shard: Open Savings Dashboard",
+        "category": "Shard",
+        "icon": "$(graph)",
+        "enablement": "shard.hasMetrics"
+      },
+      {
+        "command": "shard.refreshMetrics",
+        "title": "Shard: Refresh Metrics",
+        "category": "Shard",
+        "icon": "$(refresh)",
+        "enablement": "shard.hasMetrics"
+      },
+      {
+        "command": "shard.installHooks",
+        "title": "Shard: Install Global Hooks",
+        "category": "Shard"
+      },
+      {
+        "command": "shard.revealLogs",
+        "title": "Shard: Reveal .shard/logs Folder",
+        "category": "Shard",
+        "enablement": "shard.hasMetrics"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "shard.showDashboard",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "shard.hasMetrics"
+      },
+      {
+        "command": "shard.refreshMetrics",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "shard.hasMetrics"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "shard.showDashboard",
+          "when": "view == shard.recentRuns",
+          "group": "navigation"
+        },
+        {
+          "command": "shard.refreshMetrics",
+          "when": "view == shard.recentRuns",
+          "group": "navigation"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "shard.recentRuns",
+        "contents": "No Shard runs captured yet.\n\n[Install Shell Hooks](command:shard.installHooks)\n\nOnce hooks are installed, every CLI command proxied through Shard will appear here.",
+        "when": "!shard.hasMetrics"
+      }
+    ],
+    "views": {
+      "shard-sidebar": [
+        {
+          "type": "webview",
+          "id": "shard.summary",
+          "name": "Overview"
+        },
+        {
+          "id": "shard.recentRuns",
+          "name": "Recent Runs"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Shard",
+      "properties": {
+        "shard.metricsDbPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to Shard's metrics.db. When empty, Shard looks for .shard/metrics.db in every workspace folder."
+        },
+        "shard.pollIntervalMs": {
+          "type": "number",
+          "default": 1500,
+          "minimum": 250,
+          "description": "How often the extension polls the metrics DB for changes (ms)."
+        },
+        "shard.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the running token-savings percentage in the VS Code status bar."
+        },
+        "shard.dashboard.openOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Open the Shard dashboard automatically when VS Code starts."
+        },
+        "shard.model": {
+          "type": "string",
+          "default": "claude-sonnet-4",
+          "enum": [
+            "claude-sonnet-4",
+            "claude-opus-4",
+            "gpt-4o",
+            "gpt-4.1",
+            "gpt-4.1-mini",
+            "gpt-4.1-nano",
+            "custom"
+          ],
+          "description": "LLM model used to calculate cost savings. Custom models use the price-per-1k setting below."
+        },
+        "shard.modelPricePer1kInput": {
+          "type": "number",
+          "default": 3,
+          "description": "Custom model input price per 1K tokens ($). Only used when model is set to 'custom'."
+        },
+        "shard.modelPricePer1kOutput": {
+          "type": "number",
+          "default": 15,
+          "description": "Custom model output price per 1K tokens ($). Only used when model is set to 'custom'."
+        },
+        "shard.dashboard.showCost": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show dollar-cost savings in the dashboard."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
+  }
+}

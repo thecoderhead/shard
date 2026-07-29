@@ -1,0 +1,22 @@
+{
+  "name": "shard-cli",
+  "version": "0.1.0",
+  "description": "PTY-aware CLI proxy that compresses noisy terminal output before it reaches AI coding agents",
+  "license": "Apache-2.0",
+  "bin": {
+    "shard": "bin/shard.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thecoderhead/shard"
+  },
+  "keywords": ["cli", "llm", "ai", "pty", "proxy"],
+  "engines": {
+    "node": ">=18"
+  },
+  "os": ["win32", "darwin", "linux"],
+  "cpu": ["x64", "arm64"]
+}

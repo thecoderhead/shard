@@ -1,0 +1,102 @@
+[package]
+name = "shard"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Shard - PTY-aware CLI proxy that compresses noisy terminal output before it reaches AI coding agents"
+license = "Apache-2.0"
+readme = "README.md"
+keywords = ["cli", "llm", "ai", "pty", "proxy"]
+categories = ["command-line-utilities", "development-tools"]
+authors = ["thecoderhead"]
+repository = "https://github.com/thecoderhead/shard"
+
+[[bin]]
+name = "shard"
+path = "src/main.rs"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["rt", "macros", "sync", "fs", "io-util", "signal", "time"] }
+
+# CLI parsing
+clap = { version = "4", features = ["derive", "wrap_help", "env"] }
+
+# PTY spawn with ConPTY / Unix98 support (0.8 known-working on Windows without
+# an attached parent console; 0.9 has spawn issues in that scenario).
+portable-pty = "0.8"
+
+# ANSI/VT100 escape sequence state machine
+vte = "0.13"
+
+# SQLite metrics (bundled avoids libsqlite3 dep on Windows)
+rusqlite = { version = "0.31", features = ["bundled", "chrono"] }
+
+# Regex + fast-hashing for L-Drain LSH (Phase 2 primed)
+regex = "1"
+ahash = "0.8"
+
+# Exact BPE token counting (Phase 2 upgrade from byte heuristic)
+tiktoken-rs = "0.6"
+
+# Error plumbing
+anyhow = "1"
+thiserror = "1"
+
+# Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# Identifiers & time
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Terminal detection & raw mode (cross-platform incl. Windows ConPTY)
+crossterm = "0.28"
+is-terminal = "0.4"
+
+# Zero-copy byte plumbing
+bytes = "1"
+
+# Config path resolution (XDG / OS standard dirs)
+dirs = "5"
+
+# Serialization for metrics JSON output
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Platform-agnostic tty size on Windows without unsafe
+terminal_size = "0.4"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+nix = { version = "0.29", features = ["signal", "term"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_System_Console",
+    "Win32_Foundation",
+    "Win32_System_Threading",
+] }
+
+[dev-dependencies]
+tempfile = "3"
+assert_cmd = "2"
+predicates = "3"
+serial_test = "3"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+debug = false
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[lints.rust]
+unsafe_code = "warn"
+unused_must_use = "deny"
