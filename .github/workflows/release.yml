@@ -42,16 +42,21 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
+      - name: Install cross-compiler (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
+        env:
+          CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
 
       - name: Package binary
         shell: bash
         run: |
           BIN="target/${{ matrix.target }}/release/shard${{ matrix.suffix }}"
-          ARCHIVE="shard-${{ matrix.target }}${{ matrix.suffix }}"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            7z a "${ARCHIVE}.zip" "$BIN"
+            7z a "shard-${{ matrix.target }}.exe.zip" "$BIN"
           else
             tar czf "shard-${{ matrix.target }}.tar.gz" -C "$(dirname "$BIN")" "$(basename "$BIN")"
           fi
@@ -62,8 +67,28 @@ jobs:
           name: shard-${{ matrix.target }}
           path: shard-*
 
+  build-vsix:
+    name: Build VSIX
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build extension
+        working-directory: extension
+        run: |
+          npm install --include=dev
+          npm install -g @vscode/vsce
+          vsce package
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-vsix
+          path: extension/*.vsix
+
   create-release:
-    needs: build
+    needs: [build, build-vsix]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
