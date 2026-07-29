@@ -112,20 +112,12 @@ impl ShardPTYBridge {
         let (compact_tx, compact_rx) = unbounded_channel::<String>();
 
         let vte_cancel = cancel.clone();
-        let compact_tx_option = if compaction_mode {
-            Some(compact_tx)
-        } else {
-            drop(compact_rx);
-            None
-        };
-        let vte_task = tokio::spawn(async move {
-            drain_vte(vte_rx, vte_cancel, compact_tx_option).await
-        });
 
         // Spawn a writer task that consumes compacted windows from the
         // streaming compactor and writes them to stdout as they arrive.
-        let compact_writer = if compaction_mode {
-            Some(tokio::task::spawn_blocking(|| {
+        let (compact_tx_option, compact_writer) = if compaction_mode {
+            let compact_tx_option = Some(compact_tx);
+            let writer = Some(tokio::task::spawn_blocking(move || {
                 let stdout = std::io::stdout();
                 let mut buf = stdout.lock();
                 while let Some(chunk) = compact_rx.blocking_recv() {
@@ -133,10 +125,16 @@ impl ShardPTYBridge {
                     let _ = buf.write_all(chunk.as_bytes());
                     let _ = buf.flush();
                 }
-            }))
+            }));
+            (compact_tx_option, writer)
         } else {
-            None
+            drop(compact_rx);
+            (None, None)
         };
+
+        let vte_task = tokio::spawn(async move {
+            drain_vte(vte_rx, vte_cancel, compact_tx_option).await
+        });
 
         let outcome = self
             .spawn_and_tee(run_id, vfs_tx, vte_tx, start_instant, cancel.clone())
