@@ -211,7 +211,7 @@ impl ShardPTYBridge {
 
         use crate::metrics;
         let db_path = self.metrics_db_path.clone();
-        tokio::task::spawn_blocking(move || {
+        let _ = tokio::task::spawn_blocking(move || {
             if let Some(db) = metrics::open_or_degrade(&db_path) {
                 if let Err(e) = db.insert_run(&record) {
                     tracing::warn!(target: "shard::metrics", %e, "failed to insert run record");
