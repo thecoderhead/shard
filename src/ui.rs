@@ -4,7 +4,7 @@
 //! neon-magenta glitch accents, HUD box-frames with signal meters, and
 //! terminal-scan animations.
 
-use crossterm::style::{Color, Stylize};
+use crossterm::style::Stylize;
 
 // ── Palette ─────────────────────────────────────────────────────────────────
 //   CYAN     primary (frames, headers, data rails)

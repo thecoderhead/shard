@@ -128,7 +128,7 @@ impl ShardPTYBridge {
             Some(tokio::task::spawn_blocking(|| {
                 let stdout = std::io::stdout();
                 let mut buf = stdout.lock();
-                while let Ok(chunk) = compact_rx.blocking_recv() {
+                while let Some(chunk) = compact_rx.blocking_recv() {
                     use std::io::Write as _;
                     let _ = buf.write_all(chunk.as_bytes());
                     let _ = buf.flush();
@@ -586,7 +586,7 @@ async fn drain_vte(
                 let mut c = counts_c.lock().unwrap();
                 c.text_bytes += b.len() as u64;
                 c.text_events += 1;
-                let s = unsafe { String::from_utf8_unchecked(b) };
+                let s = String::from_utf8(b).unwrap_or_default();
                 text_c.lock().unwrap().push_str(&s);
             }
             Token::Sgr { bytes } => {
