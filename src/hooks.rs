@@ -19,7 +19,7 @@ pub fn run(opts: InitOptions) -> Result<()> {
     let mut stdout = std::io::stdout().lock();
 
     if opts.show {
-        let report = hooks_impl::run_show(opts.global)?;
+        let report = hooks_impl::registry::run_show(opts.global)?;
         writeln!(stdout, "{}", ui::logo())?;
         writeln!(stdout, "{}", ui::hr("hook status"))?;
         writeln!(stdout)?;
@@ -43,7 +43,7 @@ pub fn run(opts: InitOptions) -> Result<()> {
     }
 
     if opts.uninstall {
-        let report = hooks_impl::run_uninstall(opts.global)?;
+        let report = hooks_impl::registry::run_uninstall(opts.global)?;
         let home = dirs::home_dir();
         let features_outcome = home.as_ref().and_then(|h| {
             let p = h.join(".shard").join("features.sh");
@@ -70,7 +70,7 @@ pub fn run(opts: InitOptions) -> Result<()> {
     }
 
     if opts.context_prune || opts.cat_compress {
-        let report = hooks_impl::run_install(opts.global)?;
+        let report = hooks_impl::registry::run_install(opts.global)?;
         let feature_report = hooks_impl::run_install_features(opts.context_prune, opts.cat_compress)?;
 
         writeln!(stdout, "{}", ui::logo())?;
@@ -115,7 +115,7 @@ pub fn run(opts: InitOptions) -> Result<()> {
         return Ok(());
     }
 
-    let report = hooks_impl::run_install(opts.global)?;
+    let report = hooks_impl::registry::run_install(opts.global)?;
     writeln!(stdout, "{}", ui::logo())?;
     writeln!(stdout, "{}", ui::hr("install"))?;
     writeln!(stdout)?;

@@ -127,7 +127,7 @@ impl<F: FnMut(Token)> Perform for Performer<F> {
                     bytes.push(b':');
                 }
                 // Write integer directly — avoids sub.to_string() allocation.
-                write_usize(&mut bytes, sub);
+                write_usize(&mut bytes, *sub as u64);
             }
         }
         let mut ch = [0u8; 4];

@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use clap::ValueEnum;
+use crossterm::style::Stylize;
 use serde::Serialize;
 
 use crate::metrics::MetricsDb;

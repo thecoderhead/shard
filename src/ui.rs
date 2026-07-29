@@ -31,9 +31,9 @@ pub fn logo() -> String {
          {m}  ███████  ██  ██  ██  ██  ██  ██  ██████{reset}   {ver}\n\
          {scan}\n\
          {nfo}",
-        c = c.to_string().bold(),
+        c = c.bold(),
         m = m.bold(),
-        reset = Color::Reset.to_string(),
+        reset = Color::Reset,
         ver = glitch_label(&format!("v{}", env!("CARGO_PKG_VERSION")), false),
         scan = scanline(),
         nfo = topo_tag(),
@@ -192,10 +192,11 @@ pub fn progress_bar(fraction: f64, width: usize) -> String {
             }
         })
         .collect::<String>();
-    let empty_bar: String = std::iter::repeat('░')
+    let empty_bar = std::iter::repeat('░')
         .take(empty)
         .collect::<String>()
-        .dim();
+        .dim()
+        .to_string();
     let pct = format!("{:5.1}%", fraction * 100.0);
     format!("{}{} [{}]", gradient, empty_bar, pct.bold())
 }

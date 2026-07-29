@@ -21,7 +21,7 @@ pub struct ApproxCounter;
 impl TokenCounter for ApproxCounter {
     #[inline]
     fn count(&self, text: &[u8]) -> u64 {
-        approx_from_bytes(text.len() as u64)
+        Self::approx_from_bytes(text.len() as u64)
     }
 }
 
@@ -55,7 +55,14 @@ static GLOBAL_COUNTER: LazyLock<Box<dyn TokenCounter>> = LazyLock::new(|| {
 /// Create a token counter, preferring tiktoken-rs with heuristic fallback.
 /// Caches the result so subsequent calls share the same tiktoken instance.
 pub fn new_counter() -> &'static dyn TokenCounter {
-    &*GLOBAL_COUNTER
+    GLOBAL_COUNTER.as_ref()
+}
+
+/// Approximate token count via byte heuristic: `ceil(bytes / 4)`.
+/// Matches the average English token density of `cl100k_base`.
+#[inline]
+pub fn approx_from_bytes(n: u64) -> u64 {
+    n.saturating_add(3) / 4
 }
 
 /// Convenience wrapper for slice inputs — uses the global counter.

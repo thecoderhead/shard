@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 use anyhow::Result;
+use crossterm::style::Stylize;
 
 use crate::compact::{self, Archetype};
 use crate::tokens;

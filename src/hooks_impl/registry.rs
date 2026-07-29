@@ -141,7 +141,7 @@ pub fn upsert_json_block(path: &Path, hook_body: &str) -> Result<EditOutcome> {
     }
 
     // Deep-merge the hook object into existing.
-    if let (serde_json::Value::Object(ref mut obj), serde_json::Value::Object(hook_obj)) =
+    if let (serde_json::Value::Object(obj), serde_json::Value::Object(hook_obj)) =
         (&mut existing, hook_value)
     {
         for (k, v) in hook_obj {

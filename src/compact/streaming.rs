@@ -99,7 +99,7 @@ impl StreamingCompactor {
 
         if self.classified {
             // Use batch compaction with known archetype.
-            let result = batch_compact(&input, None);
+            let result = batch_compact::compact(&input, None);
             self.archetype = Some(result.archetype);
             result.text
         } else {

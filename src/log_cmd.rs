@@ -2,6 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
+use crossterm::style::Stylize;
 
 use crate::ui;
 use crate::vfs;
