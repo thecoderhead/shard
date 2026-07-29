@@ -109,7 +109,7 @@ impl ShardPTYBridge {
         // Sgr/Text/Control and accumulates the plain-text bytes for the
         // compaction engine. In piped mode, also streams compacted output
         // incrementally through a StreamingCompactor.
-        let (compact_tx, compact_rx) = unbounded_channel::<String>();
+        let (compact_tx, mut compact_rx) = unbounded_channel::<String>();
 
         let vte_cancel = cancel.clone();
 
