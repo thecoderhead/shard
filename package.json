@@ -1,6 +1,6 @@
 {
   "name": "shard-proxy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "PTY-aware CLI proxy that compresses noisy terminal output before it reaches AI coding agents",
   "license": "Apache-2.0",
   "bin": {
