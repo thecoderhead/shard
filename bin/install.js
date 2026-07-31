@@ -54,7 +54,7 @@ if (entry) {
   const [target, ext] = entry;
   const archiveName = ext === ".zip" ? `shard-${target}.exe.zip` : `shard-${target}${ext}`;
   const url = `https://github.com/${REPO}/releases/download/${VERSION}/${archiveName}`;
-  const tmp = resolve(__dirname, ".shard-dl-" + process.pid);
+  const tmp = resolve(__dirname, ".shard-dl-" + process.pid + (ext === ".zip" ? ".zip" : ""));
 
   console.log("shard: downloading pre-built binary...");
   try {
