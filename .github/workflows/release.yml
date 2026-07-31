@@ -58,7 +58,7 @@ jobs:
         run: |
           BIN="target/${{ matrix.target }}/release/shard${{ matrix.suffix }}"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            7z a "shard-${{ matrix.target }}.exe.zip" "$BIN"
+            cd "$(dirname "$BIN")" && 7z a "shard-${{ matrix.target }}.exe.zip" "$(basename "$BIN")"
           else
             tar czf "shard-${{ matrix.target }}.tar.gz" -C "$(dirname "$BIN")" "$(basename "$BIN")"
           fi

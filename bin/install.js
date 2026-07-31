@@ -1,14 +1,29 @@
 #!/usr/bin/env node
-const { existsSync, copyFileSync, chmodSync, unlinkSync } = require("fs");
-const { resolve } = require("path");
+const { existsSync, copyFileSync, chmodSync, unlinkSync, readdirSync, statSync } = require("fs");
+const { resolve, join } = require("path");
 const { execSync, spawnSync } = require("child_process");
+
+// Recursively find the native binary under dir (archives may nest it).
+function findBinary(dir) {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (name === BIN_NAME) return p;
+    if (statSync(p).isDirectory()) {
+      const found = findBinary(p);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 const pkg = require(resolve(__dirname, "..", "package.json"));
 const BIN_NAME = process.platform === "win32" ? "shard.exe" : "shard";
 const BIN_DIR = resolve(__dirname);
 const TARGET_BIN = resolve(BIN_DIR, BIN_NAME);
 const REPO = (pkg.repository?.url || "").replace(/https:\/\/github\.com\//, "").replace(/\.git$/, "") || "thecoderhead/shard";
-const VERSION = "v" + pkg.version;
+// Use a fixed release tag (separate from npm package version).
+// Bump this when a new GitHub Release with binaries is published.
+const VERSION = "v0.1.0";
 
 const TARGET_MAP = {
   "win32-x64":      ["x86_64-pc-windows-msvc",  ".zip"],
@@ -60,7 +75,18 @@ if (entry) {
       // tar.gz — extract to BIN_DIR, binary name inside is just "shard"
       execSync(`tar xzf "${tmp}" -C "${BIN_DIR}"`, { stdio: "pipe" });
     }
+    // The archive may nest the binary (e.g. target/<triple>/release/shard.exe),
+    // so locate it wherever it landed and move it into place.
+    if (!existsSync(TARGET_BIN)) {
+      const found = findBinary(BIN_DIR);
+      if (found) {
+        copyFileSync(found, TARGET_BIN);
+      }
+    }
     if (process.platform !== "win32") chmodSync(TARGET_BIN, 0o755);
+    if (!existsSync(TARGET_BIN)) {
+      throw new Error("extracted archive did not contain " + BIN_NAME);
+    }
     unlinkSync(tmp);
     console.log("shard: installed native binary at " + TARGET_BIN);
     process.exit(0);
